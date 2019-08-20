@@ -131,9 +131,13 @@ export default {
         segmentGroup[id] = currentSegment[currentSegment.length-1]
       })
       segmentIdGroup.forEach(id => {
-        segmentGroup[id].refs.forEach(ref => {
+        segmentGroup[id].refs.forEach((ref, i) => {
           if(ref.traceId === this.traceId) {
-            this.traverseTree(segmentGroup[ref.parentSegmentId],ref.parentSpanId,ref.parentSegmentId,segmentGroup[id])
+              if (!segmentGroup[ref.parentSegmentId]) {
+                  delete segmentGroup[id].refs[i];
+              } else {
+                  this.traverseTree(segmentGroup[ref.parentSegmentId],ref.parentSpanId,ref.parentSegmentId,segmentGroup[id]);
+              }
           };
         })
         // if(segmentGroup[id].refs.length !==0 ) delete segmentGroup[id];
