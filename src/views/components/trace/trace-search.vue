@@ -90,12 +90,12 @@
 
     private time!: Date[];
     private status: boolean = true;
-    private maxTraceDuration: string = localStorage.getItem('maxTraceDuration') || '';
-    private minTraceDuration: string = localStorage.getItem('minTraceDuration') || '';
+    private maxTraceDuration: string = this.$route.query.maxTraceDuration || localStorage.getItem('maxTraceDuration') || '';
+    private minTraceDuration: string = this.$route.query.minTraceDuration || localStorage.getItem('minTraceDuration') || '';
     private service: Option = {label: 'All', key: ''};
     private instance: Option = {label: 'All', key: ''};
-    private endpointName: string = localStorage.getItem('endpointName') || '';
-    private traceId: string = localStorage.getItem('traceId') || '';
+    private endpointName: string = this.$route.query.endpointName || localStorage.getItem('endpointName') || '';
+    private traceId: string = this.$route.query.traceId || localStorage.getItem('traceId') || '';
     private traceState: Option = {label: 'All', key: 'ALL'};
 
     get eventHub() {
