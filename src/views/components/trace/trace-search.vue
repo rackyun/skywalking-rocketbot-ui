@@ -74,6 +74,7 @@
   import { Component, Vue, Watch } from 'vue-property-decorator';
   import { Action, Getter, Mutation, State } from 'vuex-class';
   import TraceSelect from './trace-select.vue';
+  import timeFormat from "@/utils/timeFormat";
 
   @Component({components: {TraceSelect}})
   export default class TraceSearch extends Vue {
@@ -82,6 +83,7 @@
     @Getter('durationTime') private durationTime: any;
     @Getter('duration') private duration: any;
     @Action('RESET_DURATION') private RESET_DURATION: any;
+    @Action('SET_DURATION') private SET_DURATION: any;
     @Action('rocketTrace/GET_SERVICES') private GET_SERVICES: any;
     @Action('rocketTrace/GET_INSTANCES') private GET_INSTANCES: any;
     @Action('rocketTrace/GET_TRACELIST') private GET_TRACELIST: any;
@@ -90,12 +92,12 @@
 
     private time!: Date[];
     private status: boolean = true;
-    private maxTraceDuration: string = this.$route.query['maxTraceDuration'][0] || localStorage.getItem('maxTraceDuration') || '';
-    private minTraceDuration: string = this.$route.query['minTraceDuration'][0] || localStorage.getItem('minTraceDuration') || '';
+    private maxTraceDuration: string = localStorage.getItem('maxTraceDuration') || '';
+    private minTraceDuration: string = localStorage.getItem('minTraceDuration') || '';
     private service: Option = {label: 'All', key: ''};
     private instance: Option = {label: 'All', key: ''};
-    private endpointName: string = this.$route.query['endpointName'][0] || localStorage.getItem('endpointName') || '';
-    private traceId: string = this.$route.query['traceId'][0] || localStorage.getItem('traceId') || '';
+    private endpointName: string = localStorage.getItem('endpointName') || '';
+    private traceId: string = localStorage.getItem('traceId') || '';
     private traceState: Option = {label: 'All', key: 'ALL'};
 
     get eventHub() {
@@ -169,6 +171,20 @@
     }
 
     private getTraceList() {
+      if (this.$route.query['endpointName']) {
+        this.endpointName = this.$route.query['endpointName'].toString();
+      }
+      if (this.$route.query['duration'] && 'last1Hour' == this.$route.query['duration'].toString()) {
+        this.time[0] = new Date(new Date().getTime() - 3600000);
+        this.time[1] = new Date();
+        const queryDuration = timeFormat(this.time);
+        this.durationTime = queryDuration;
+        this.SET_DURATION(queryDuration);
+      }
+      if (this.$route.query['traceId']) {
+        this.traceId = this.$route.query['traceId'].toString();
+      }
+
       this.GET_SERVICES({duration: this.durationTime});
       const temp: any = {
         queryDuration: this.globalTimeFormat([
