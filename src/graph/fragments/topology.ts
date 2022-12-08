@@ -15,63 +15,28 @@
  * limitations under the License.
  */
 
-export const TopoServiceInfo = {
-  variable: '$duration: Duration!, $id: ID!',
+export const TopoInstanceDependency = {
+  variable: '$clientServiceId: ID!, $serverServiceId: ID!, $duration: Duration!',
   query: `
-    getResponseTimeTrend: getLinearIntValues(metric: {
-      name: "service_relation_server_resp_time"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
+  topo: getServiceInstanceTopology(clientServiceId: $clientServiceId,
+    serverServiceId: $serverServiceId, duration: $duration) {
+    nodes {
+      id
+      name
+      type
+      isReal
+      serviceName
+      serviceId
     }
-    getThroughputTrend: getLinearIntValues(metric: {
-      name: "service_relation_server_cpm"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
+    calls {
+      id
+      source
+      detectPoints
+      target
     }
-    getSLATrend: getLinearIntValues(metric: {
-      name: "service_relation_server_call_sla"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
-    }
-`};
-
-export const TopoClientInfo = {
-  variable: '$duration: Duration!, $id: ID!',
-  query: `
-    getResponseTimeTrend: getLinearIntValues(metric: {
-      name: "service_relation_client_resp_time"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
-    }
-    getThroughputTrend: getLinearIntValues(metric: {
-      name: "service_relation_client_cpm"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
-    }
-    getSLATrend: getLinearIntValues(metric: {
-      name: "service_relation_client_call_sla"
-      id: $id
-    }, duration: $duration) {
-      values {
-        value
-      }
-    }
-`};
+  }
+`,
+};
 
 export const Topo = {
   variable: '$duration: Duration!',
@@ -86,12 +51,67 @@ export const Topo = {
     calls {
       id
       source
+      detectPoints
       target
-      callType
-      detectPoint
     }
-  }`};
-
+  }`,
+};
+export const ServiceTopo = {
+  variable: '$duration: Duration!, $serviceId: ID!',
+  query: `
+  topo: getServiceTopology(duration: $duration, serviceId: $serviceId) {
+    nodes {
+      id
+      name
+      type
+      isReal
+    }
+    calls {
+      id
+      source
+      detectPoints
+      target
+    }
+  }`,
+};
+export const ServicesTopo = {
+  variable: '$duration: Duration!, $serviceIds: [ID!]!',
+  query: `
+  topo: getServicesTopology(duration: $duration, serviceIds: $serviceIds) {
+    nodes {
+      id
+      name
+      type
+      isReal
+    }
+    calls {
+      id
+      source
+      detectPoints
+      target
+    }
+  }`,
+};
+export const endpointTopology = {
+  variable: ['$endpointId: ID!', '$duration: Duration!'],
+  query: `
+  endpointTopology: getEndpointDependencies(endpointId: $endpointId, duration: $duration) {
+    nodes {
+      id
+      name
+      serviceId
+      serviceName
+      type
+      isReal
+    }
+    calls {
+      id
+      source
+      target
+      detectPoints
+    }
+  }`,
+};
 export const TopoMetric = {
   variable: '$ids: [ID!]!',
   query: `
@@ -121,7 +141,8 @@ export const TopoMetric = {
       id
       value
     }
-  }`};
+  }`,
+};
 
 export const TopoServiceMetric = {
   variable: '$idsS: [ID!]!',
@@ -136,14 +157,15 @@ export const TopoServiceMetric = {
     }
   }
   latencyS: getValues(metric: {
-    name: "service_relation_client_resp_time"
+    name: "service_relation_server_resp_time"
     ids: $idsS
   }, duration: $duration) {
     values {
       id
       value
     }
-  }`};
+  }`,
+};
 
 export const TopoClientMetric = {
   variable: '$idsC: [ID!]!',
@@ -165,4 +187,32 @@ export const TopoClientMetric = {
       id
       value
     }
-  }`};
+  }`,
+};
+
+export const DependencyInstanceServerMetric = {
+  variable: '$duration: Duration!, $idsC: [ID!]!',
+  query: `
+  cpmC: getValues(metric: {
+    name: "service_instance_relation_server_cpm"
+    ids: $idsC
+  }, duration: $duration) {
+    values {
+      id
+      value
+    }
+  }`,
+};
+export const DependencyInstanceClientMetric = {
+  variable: '$duration: Duration!, $idsC: [ID!]!',
+  query: `
+  cpmC: getValues(metric: {
+    name: "service_instance_relation_client_cpm"
+    ids: $idsC
+  }, duration: $duration) {
+    values {
+      id
+      value
+    }
+  }`,
+};

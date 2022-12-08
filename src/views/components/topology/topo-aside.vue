@@ -1,152 +1,177 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
 
 <template>
   <aside class="link-topo-aside">
-    <svg class="link-topo-aside-btn mb-10 icon cp lg" @click="show = !show" :style="`position:${show?'absolute':'initial'};left:${show?290:0}px;transform: rotate(${show?0 : 180}deg);`">
-      <use xlink:href="#chevron-left"></use>
+    <Radial v-if="radioStatus" :datas="{ nodes: stateTopo.nodes, calls: stateTopo.calls }" />
+    <svg
+      class="link-topo-aside-btn icon cp lg"
+      @click="showRadial()"
+      :style="`position:absolute;left:580px;${radioStatus ? 'background-color: #357de9;' : ''}`"
+    >
+      <use xlink:href="#issues" />
     </svg>
-    <div class="link-topo-aside-box mb-10" v-if="!stateTopo.currentNode.name && show">
-      <div class="mb-20">
-        <span class="b dib mr-20">All Services</span>
-      </div>
-      <div class="mb-10" v-for="(val, key, index) in types" :key="index">
-        <span class="r">{{val}}</span>
-        <span class="grey">{{key}}</span>
-      </div>
-    </div>
-    <div class="link-topo-aside-box mb-10" v-else-if="show">
-      <div class="mb-20">
-        <span class="b dib mr-20">Service Detail</span>
-      </div>
-      <div class="mb-10">
-        <span class="label grey">Name</span>
-        <span class="content">{{stateTopo.currentNode.name}}</span>
-      </div>
-      <div class="mb-10">
-        <span class="label grey">Type</span>
-        <span class="content">{{stateTopo.currentNode.type}}</span>
-      </div>
-      <div class="mb-10" v-if="stateTopo.currentNode.cpm">
-        <span class="label grey">Cpm</span>
-        <span class="content">{{stateTopo.currentNode.cpm}}</span>
-      </div>
-      <div class="mb-10" v-if="stateTopo.currentNode.sla">
-        <span class="label grey">SLA</span>
-        <span class="content">{{stateTopo.currentNode.sla || ''}}%</span>
-      </div>
-      <div class="mb-10" v-if="stateTopo.currentNode.latency">
-        <span class="label grey">Latency</span>
-        <span class="content">{{stateTopo.currentNode.latency}} ms</span>
-      </div>
-    </div>
-    <div class="link-topo-aside-box">
-      <div class="mb-5 clear">
-        <span class="b dib mr-20 vm">Detect Point</span>
-        <span class="link-topo-aside-box-btn tc r sm cp b" :class="{'active':!stateTopo.mode}" @click="setMode(false)">Client</span>
-        <span class="link-topo-aside-box-btn tc r sm cp b" :class="{'active':stateTopo.mode}" @click="setMode(true)">Server</span>
-      </div>
-      <TopoChart v-if="stateTopo.getResponseTimeTrend.length" title="Avg Response Time" unit="ms" :intervalTime="intervalTime" :data="stateTopo.getResponseTimeTrend"/>
-      <TopoChart v-if="stateTopo.getThroughputTrend.length" title="Avg Throughput" unit="cpm" :intervalTime="intervalTime" :data="stateTopo.getThroughputTrend"/>
-      <TopoChart v-if="stateTopo.getSLATrend.length" title="Avg SLA" unit="%" :intervalTime="intervalTime" :precent="true" :data="stateTopo.getSLATrend"/>
-    </div>
+    <TopoService />
+    <TopoDetectPoint />
   </aside>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import topo, { State as topoState} from '@/store/modules/topo';
-import { State, Mutation, Getter, Action } from 'vuex-class';
-import TopoChart from './topo-chart.vue';
+  import { initState } from '@/store/modules/dashboard/dashboard-data-layout';
+  import { State as topoState } from '@/store/modules/topology';
+  import { Component, Vue } from 'vue-property-decorator';
+  import { Action, Getter, Mutation, State } from 'vuex-class';
+  import Radial from './chart/radial.vue';
+  import TopoService from './topo-services.vue';
+  import TopoDetectPoint from './topo-detect-point.vue';
 
-@Component({components: {TopoChart}})
-export default class Topology extends Vue {
-  @State('rocketTopo') public stateTopo!: topoState;
-  @Getter('intervalTime') public intervalTime: any;
-  @Mutation('rocketTopo/SET_MODE') public SET_MODE: any;
-  @Action('rocketTopo/CLEAR_TOPO_INFO') public CLEAR_TOPO_INFO: any;
-  get types() {
-    const result: any = {};
-    this.stateTopo.nodes.forEach((i: any) => {
-      if (result[i.type]) {
-        result[i.type] += 1;
-      } else {
-        result[i.type] = 1;
-      }
-    });
-    return result;
+  @Component({
+    components: {
+      TopoService,
+      Radial,
+      TopoDetectPoint,
+    },
+  })
+  export default class TopoAside extends Vue {
+    @State('rocketTopo') private stateTopo!: topoState;
+    @Getter('intervalTime') private intervalTime: any;
+    @Getter('durationTime') private durationTime: any;
+    @Action('rocketTopo/CLEAR_TOPO') private CLEAR_TOPO: any;
+    @Action('rocketTopo/CLEAR_TOPO_INFO') private CLEAR_TOPO_INFO: any;
+    @Mutation('SET_COMPS_TREE') private SET_COMPS_TREE: any;
+    @Mutation('rocketTopo/SET_MODE_STATUS') private SET_MODE_STATUS: any;
+    private initState = initState;
+    private radioStatus: boolean = false;
+
+    private get showServerInfo() {
+      return this.stateTopo.currentNode.name && this.stateTopo.currentNode.isReal;
+    }
+
+    private created() {
+      this.SET_COMPS_TREE(this.initState.tree);
+    }
+
+    private beforeDestroy() {
+      this.CLEAR_TOPO_INFO();
+      this.CLEAR_TOPO();
+    }
+
+    get types() {
+      const result: any = {};
+      this.stateTopo.nodes.forEach((i: any) => {
+        if (result[i.type]) {
+          result[i.type] += 1;
+        } else {
+          result[i.type] = 1;
+        }
+      });
+      return result;
+    }
+
+    private showRadial() {
+      this.radioStatus = !this.radioStatus;
+    }
   }
-  private show: boolean = true;
-  private showInfo: boolean = false;
-  private setMode(mode: boolean) {
-    this.SET_MODE(mode);
-    this.stateTopo.callback();
-  }
-}
 </script>
-<style lang="scss">
-.link-topo-aside{
-  width: 280px;
-  position: absolute;
-  z-index: 2;
-  left: 20px;
-  top: 30px;
-  .to-apm{
-    padding-top: 10px;
-    border-top: 1px solid #d8d8d866;
+<style lang="scss" scoped>
+  .link-topo-aside {
+    width: 280px;
+    position: absolute;
+    z-index: 2;
+    left: 20px;
+    top: 7px;
+
+    .to-apm {
+      padding-top: 10px;
+      border-top: 1px solid #d8d8d866;
+    }
   }
-}
-.link-topo-aside-box-btn{
-  color: #626977;
-  border: 1px solid;
-  padding: 0px 3px;
-  width: 45px;
-  display: inline-block;
-  &.active{
-    color: #448dfe;
+  .title {
+    padding: 10px;
   }
-}
-.link-topo-aside-btn{
-  display:block;
-  background: #252a2f9a;
-  color: #ddd;
-  border-radius: 4px 4px 4px 4px;
-  text-align: center;
-  padding: 10px;
-}
-.link-topo-aside-box{
-  border-radius: 4px;
-  color: #ddd;
-  background-color: #252a2f9a;
-  padding: 15px 20px 10px;
-  .label{
-    display: inline-block;
-    width: 40%;
-  }
-  .content{
-    vertical-align: top;
-    display: inline-block;
-    width: 60%;
-  }
-  .circle{
-    width: 8px;
-    height: 8px;
+
+  .link-topo-aside-btn {
+    display: block;
+    background: #252a2f9a;
+    color: #ddd;
     border-radius: 4px;
-    background-color: #EE5B5B;
-    margin-top: 6px;
+    text-align: center;
+    padding: 10px;
+    z-index: 101;
   }
-}
+
+  .link-topo-aside-box {
+    border-radius: 4px;
+    position: absolute;
+    width: 280px;
+    z-index: 101;
+    color: #ddd;
+    background-color: #2b3037;
+    // padding: 15px 20px 10px;
+
+    .label {
+      display: inline-block;
+      width: 40%;
+    }
+
+    .content {
+      vertical-align: top;
+      display: inline-block;
+      width: 60%;
+    }
+
+    .circle {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background-color: #ee5b5b;
+      margin-top: 6px;
+    }
+  }
+
+  .link-topo-aside-box {
+    p {
+      margin-block-start: auto !important;
+      margin-block-end: auto !important;
+    }
+  }
+
+  .link-topo-aside-box-min {
+    width: 360px;
+    animation: 0.5s linkTopoAsideBoxMin 1 running;
+  }
+
+  .link-topo-aside-box-max {
+    width: 60%;
+    animation: 0.5s linkTopoAsideBoxMax 1 running;
+  }
+
+  @keyframes linkTopoAsideBoxMax {
+    from {
+      width: 280px;
+    }
+    to {
+      width: 60%;
+    }
+  }
+
+  @keyframes linkTopoAsideBoxMin {
+    from {
+      width: 60%;
+    }
+    to {
+      width: 280px;
+    }
+  }
 </style>

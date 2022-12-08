@@ -18,8 +18,8 @@
 export const Traces = {
   variable: '$condition: TraceQueryCondition',
   query: `
-  traces: queryBasicTraces(condition: $condition) {
-    data: traces {
+  data: queryBasicTraces(condition: $condition) {
+    traces {
       key: segmentId
       endpointNames
       duration
@@ -28,7 +28,8 @@ export const Traces = {
       traceIds
     }
     total
-  }`};
+  }`,
+};
 
 export const ServiceInstanceOption = {
   variable: '$duration: Duration!, $serviceId: ID!',
@@ -36,9 +37,8 @@ export const ServiceInstanceOption = {
     instanceId: getServiceInstances(duration: $duration, serviceId: $serviceId) {
       key: id
       label: name
-    }`};
-
-
+    }`,
+};
 
 /**
  * @param { traceId } { string }
@@ -59,6 +59,7 @@ export const Trace = {
         type
       }
       serviceCode
+      serviceInstanceName
       startTime
       endTime
       endpointName
@@ -80,4 +81,5 @@ export const Trace = {
       }
     }
   }
-  `};
+  `,
+};
